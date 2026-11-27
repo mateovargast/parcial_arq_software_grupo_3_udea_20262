@@ -1,5 +1,9 @@
 package co.edu.udea.arqsoftware.inventario.config;
 
+import co.edu.udea.arqsoftware.inventario.web.DashboardController;
+import co.edu.udea.arqsoftware.inventario.web.InventoryController;
+import co.edu.udea.arqsoftware.inventario.web.ProductController;
+import co.edu.udea.arqsoftware.inventario.web.WarehouseController;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
@@ -65,8 +69,18 @@ public class OpenApiConfig {
     }
 
     private static boolean aplicaAVersion(Method metodo, String version) {
+        if (esControladorCompatibilidad(metodo.getDeclaringClass())) {
+            return "1".equals(version);
+        }
         RequestMapping mapping = AnnotatedElementUtils.findMergedAnnotation(metodo, RequestMapping.class);
         return mapping == null || mapping.version().isEmpty() || mapping.version().equals(version);
+    }
+
+    private static boolean esControladorCompatibilidad(Class<?> tipo) {
+        return DashboardController.class.isAssignableFrom(tipo)
+                || InventoryController.class.isAssignableFrom(tipo)
+                || ProductController.class.isAssignableFrom(tipo)
+                || WarehouseController.class.isAssignableFrom(tipo);
     }
 
     private static Parameter headerVersion(String version) {

@@ -1,0 +1,140 @@
+{
+  "planHash": "043ebb198fa38cd830858ee956743d162ef0d9bc95bd98bfcdf44596a466d0e5",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-11-27T15:25:39.1984338Z",
+  "retryCount": 0,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 79060,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "production-build",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E inventario-frontend@1.0.0 build\r\n\u003E tsc -b \u0026\u0026 vite build\r\n\r\n\u001B[36mvite v8.4.0 \u001B[32mbuilding client environment for production...\u001B[36m\u001B[39m\r\ntransforming...\r\n\u2713 1692 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\ndist/index.html                               0.46 kB \u2502 gzip:   0.29 kB\r\ndist/assets/format-s37sM1-2.js                0.05 kB \u2502 gzip:   0.07 kB\r\ndist/assets/AddRounded-DEeB8MqS.js            0.24 kB \u2502 gzip:   0.19 kB\r\ndist/assets/warehouseService-mg6PeGjg.js      0.26 kB \u2502 gzip:   0.20 kB\r\ndist/assets/productService-DrYLCCGa.js        0.35 kB \u2502 gzip:   0.23 kB\r\ndist/assets/NotFoundPage-B8XGCThb.js          0.46 kB \u2502 gzip:   0.32 kB\r\ndist/assets/inventoryService-CcvZKWTx.js      1.55 kB \u2502 gzip:   0.66 kB\r\ndist/assets/SearchRounded-DJxHcnlH.js         2.24 kB \u2502 gzip:   1.18 kB\r\ndist/assets/ProductsPage-Duh9riui.js          3.18 kB \u2502 gzip:   1.46 kB\r\ndist/assets/ProductDetailsPage-DzwWJY5M.js    3.37 kB \u2502 gzip:   1.61 kB\r\ndist/assets/WarehousesPage-2MAtYbab.js        3.60 kB \u2502 gzip:   1.70 kB\r\ndist/assets/InventoryPage-mQeB-XyB.js         3.61 kB \u2502 gzip:   1.68 kB\r\ndist/assets/RequestState-Boevyymg.js          4.13 kB \u2502 gzip:   1.88 kB\r\ndist/assets/Grid-w_2m4_yC.js                  4.89 kB \u2502 gzip:   1.93 kB\r\ndist/assets/TextField-HfzrBFte.js            10.87 kB \u2502 gzip:   3.63 kB\r\ndist/assets/Stack-BcpATutC.js                11.30 kB \u2502 gzip:   3.42 kB\r\ndist/assets/TableRow-BxAXvPvs.js             12.92 kB \u2502 gzip:   4.20 kB\r\ndist/assets/MenuItem-Ss-L7-l8.js             43.66 kB \u2502 gzip:  13.08 kB\r\ndist/assets/api-COwIJTtg.js                  64.80 kB \u2502 gzip:  24.05 kB\r\ndist/assets/ProductBatchPage-CWgpFRA5.js    139.16 kB \u2502 gzip:  42.50 kB\r\ndist/assets/DashboardPage-BHs50-g7.js       417.71 kB \u2502 gzip: 118.89 kB\r\ndist/assets/index-Bgd0WnRp.js               475.92 kB \u2502 gzip: 152.71 kB\r\n\r\n\u001B[32m\u2713 built in 807ms\u001B[39m\r\n",
+        "durationMs": 3500
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E inventario-frontend@1.0.0 test\r\n\u003E vitest run\r\n\r\n\r\n RUN  v5.1.2 C:/Users/mesa3/Music/Proyectos/parcial_arq_software_grupo_3_udea_20262/frontend\r\n\r\n\r\n Test Files  1 passed (1)\r\n      Tests  3 passed (3)\r\n   Start at  10:25:34\r\n   Duration  2.77s (environment 69%, setup 17%, import 10%, transform 3%)\r\n\r\n",
+        "durationMs": 3995,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 3,
+          "testsPassed": 3,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "dev-server-home",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\n\u003Chtml lang=\u0022es\u0022\u003E\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\n    \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1.0\u0022 /\u003E\n    \u003Cmeta name=\u0022theme-color\u0022 content=\u0022#101b2d\u0022 /\u003E\n    \u003Cmeta name=\u0022description\u0022 content=\u0022Panel de gesti\u00F3n de almacenes e inventario.\u0022 /\u003E\n    \u003Ctitle\u003EInventario \u00B7 UdeA\u003C/title\u003E\n  \u003C/head\u003E\n  \u003Cbody\u003E\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.tsx\u0022\u003E\u003C/script\u003E\n  \u003C/body\u003E\n\u003C/html\u003E\n\n--- server output ---\n\r\n\u003E inventario-frontend@1.0.0 dev\r\n\u003E vite --host 0.0.0.0 --port 5173 --strictPort\r\n\r\n\r\n  \u001B[32m\u001B[1mVITE\u001B[22m v8.4.0\u001B[39m  \u001B[2mready in \u001B[0m\u001B[1m359\u001B[22m\u001B[2m\u001B[0m ms\u001B[22m\r\n\r\n  \u001B[32m\u279C\u001B[39m  \u001B[1mLocal\u001B[22m:   \u001B[36mhttp://localhost:\u001B[1m5173\u001B[22m/\u001B[39m\r\n  \u001B[32m\u279C\u001B[39m  \u001B[1mNetwork\u001B[22m: \u001B[36mhttp://192.168.39.155:\u001B[1m5173\u001B[22m/\u001B[39m  \u001B[2mWi-Fi\u001B[22m\r\n  \u001B[32m\u279C\u001B[39m  \u001B[1mNetwork\u001B[22m: \u001B[36mhttp://172.23.16.1:\u001B[1m5173\u001B[22m/\u001B[39m     \u001B[2mvEthernet (WSL (Hyp\u2026\u001B[22m\r\n",
+        "durationMs": 1124
+      },
+      {
+        "name": "product-registration-route-refresh",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\n\u003Chtml lang=\u0022es\u0022\u003E\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\n    \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1.0\u0022 /\u003E\n    \u003Cmeta name=\u0022theme-color\u0022 content=\u0022#101b2d\u0022 /\u003E\n    \u003Cmeta name=\u0022description\u0022 content=\u0022Panel de gesti\u00F3n de almacenes e inventario.\u0022 /\u003E\n    \u003Ctitle\u003EInventario \u00B7 UdeA\u003C/title\u003E\n  \u003C/head\u003E\n  \u003Cbody\u003E\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.tsx\u0022\u003E\u003C/script\u003E\n  \u003C/body\u003E\n\u003C/html\u003E\n",
+        "durationMs": 305
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "ci"
+        ],
+        "cwd": "C:\\Users\\mesa3\\Music\\Proyectos\\parcial_arq_software_grupo_3_udea_20262\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "production-build",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "C:\\Users\\mesa3\\Music\\Proyectos\\parcial_arq_software_grupo_3_udea_20262\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\mesa3\\Music\\Proyectos\\parcial_arq_software_grupo_3_udea_20262\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "dev-server-home",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev",
+          "--",
+          "--port",
+          "5173",
+          "--strictPort"
+        ],
+        "cwd": "C:\\Users\\mesa3\\Music\\Proyectos\\parcial_arq_software_grupo_3_udea_20262\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "product-registration-route-refresh",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev",
+          "--",
+          "--port",
+          "5173",
+          "--strictPort"
+        ],
+        "cwd": "C:\\Users\\mesa3\\Music\\Proyectos\\parcial_arq_software_grupo_3_udea_20262\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

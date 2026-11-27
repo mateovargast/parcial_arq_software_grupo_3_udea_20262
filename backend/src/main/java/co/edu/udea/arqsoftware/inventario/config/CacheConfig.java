@@ -3,6 +3,7 @@ package co.edu.udea.arqsoftware.inventario.config;
 import co.edu.udea.arqsoftware.inventario.web.dto.InventarioItemResponse;
 import co.edu.udea.arqsoftware.inventario.web.dto.PageResponse;
 import co.edu.udea.arqsoftware.inventario.web.dto.ResumenInventarioResponse;
+import co.edu.udea.arqsoftware.inventario.web.dto.DashboardSummaryResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.cache.autoconfigure.RedisCacheManagerBuilderCustomizer;
 import org.springframework.cache.annotation.EnableCaching;
@@ -23,17 +24,21 @@ public class CacheConfig {
 
     public static final String CACHE_INVENTARIO = "inventario";
     public static final String CACHE_RESUMEN = "resumen-inventario";
+    public static final String CACHE_DASHBOARD = "dashboardSummary";
 
     @Bean
     public RedisCacheManagerBuilderCustomizer redisCacheCustomizer(JsonMapper jsonMapper,
-                                                                   @Value("${app.cache.ttl:10m}") Duration ttl) {
+                                                                   @Value("${app.cache.ttl:10m}") Duration ttl,
+                                                                   @Value("${app.dashboard-cache.ttl:60s}") Duration dashboardTtl) {
         JavaType tipoPagina = jsonMapper.getTypeFactory()
                 .constructParametricType(PageResponse.class, InventarioItemResponse.class);
         JavaType tipoResumen = jsonMapper.constructType(ResumenInventarioResponse.class);
+        JavaType tipoDashboard = jsonMapper.constructType(DashboardSummaryResponse.class);
 
         return builder -> builder
                 .withCacheConfiguration(CACHE_INVENTARIO, configuracion(jsonMapper, tipoPagina, ttl))
-                .withCacheConfiguration(CACHE_RESUMEN, configuracion(jsonMapper, tipoResumen, ttl));
+                .withCacheConfiguration(CACHE_RESUMEN, configuracion(jsonMapper, tipoResumen, ttl))
+                .withCacheConfiguration(CACHE_DASHBOARD, configuracion(jsonMapper, tipoDashboard, dashboardTtl));
     }
 
     private static RedisCacheConfiguration configuracion(JsonMapper jsonMapper, JavaType tipo, Duration ttl) {
