@@ -26,7 +26,8 @@ CREATE TABLE producto (
     created_at       TIMESTAMPTZ    NOT NULL DEFAULT now(),
     updated_at       TIMESTAMPTZ    NOT NULL DEFAULT now(),
     CONSTRAINT uk_producto_sku UNIQUE (sku),
-    CONSTRAINT ck_producto_precio CHECK (precio_unitario >= 0)
+    CONSTRAINT ck_producto_precio CHECK (precio_unitario >= 0),
+    CONSTRAINT ck_producto_unidad_medida CHECK (unidad_medida IN ('UNIDAD', 'PAQUETE', 'CAJA', 'LITRO', 'KILOGRAMO', 'METRO'))
 );
 
 CREATE TABLE inventario (
