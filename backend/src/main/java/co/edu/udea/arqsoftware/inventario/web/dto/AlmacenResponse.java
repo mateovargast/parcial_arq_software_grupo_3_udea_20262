@@ -1,9 +1,11 @@
 package co.edu.udea.arqsoftware.inventario.web.dto;
 
 import co.edu.udea.arqsoftware.inventario.domain.Almacen;
+import org.springframework.hateoas.server.core.Relation;
 
 import java.time.Instant;
 
+@Relation(itemRelation = "almacen", collectionRelation = "almacenes")
 public record AlmacenResponse(
         Long id,
         String codigoSede,

@@ -3,10 +3,12 @@ package co.edu.udea.arqsoftware.inventario.web.dto;
 import co.edu.udea.arqsoftware.inventario.domain.Inventario;
 import co.edu.udea.arqsoftware.inventario.domain.Producto;
 import co.edu.udea.arqsoftware.inventario.domain.UnidadMedida;
+import org.springframework.hateoas.server.core.Relation;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
+@Relation(itemRelation = "item", collectionRelation = "inventario")
 public record InventarioItemResponse(
         Long inventarioId,
         Long almacenId,

@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,14 +24,12 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
                                              @Param("skus") Collection<String> skus);
 
     @Query("""
-            select coalesce(sum(i.cantidad * i.producto.precioUnitario), 0) from Inventario i
+            select count(i) as totalProductos,
+                   coalesce(sum(i.cantidad), 0) as unidadesTotales,
+                   coalesce(sum(i.cantidad * p.precioUnitario), 0) as valorTotal,
+                   coalesce(sum(case when i.cantidad <= i.stockMinimo then 1 else 0 end), 0) as productosStockBajo
+            from Inventario i join i.producto p
             where i.almacen.id = :almacenId
             """)
-    BigDecimal calcularValorTotal(@Param("almacenId") Long almacenId);
-
-    @Query("""
-            select count(i) from Inventario i
-            where i.almacen.id = :almacenId and i.cantidad <= i.stockMinimo
-            """)
-    long contarStockBajo(@Param("almacenId") Long almacenId);
+    ResumenInventarioView resumirPorAlmacen(@Param("almacenId") Long almacenId);
 }

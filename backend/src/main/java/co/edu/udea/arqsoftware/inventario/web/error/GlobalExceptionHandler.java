@@ -12,12 +12,15 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.accept.InvalidApiVersionException;
+import org.springframework.web.accept.MissingApiVersionException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +28,9 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final String HEADER_VERSION = "X-API-Version";
+    private static final String VERSIONES_SOPORTADAS = "1, 2";
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ProblemDetail handleNoEncontrado(RecursoNoEncontradoException ex) {
@@ -60,6 +66,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "El valor '" + ex.getValue() + "' no es válido para el parámetro '" + ex.getName() + "'");
     }
 
+    @ExceptionHandler(MissingApiVersionException.class)
+    public ProblemDetail handleVersionFaltante(MissingApiVersionException ex) {
+        return problema(HttpStatus.BAD_REQUEST, "Versión de API requerida",
+                "Debe enviar el header " + HEADER_VERSION + " con una versión soportada: " + VERSIONES_SOPORTADAS);
+    }
+
+    @ExceptionHandler(InvalidApiVersionException.class)
+    public ProblemDetail handleVersionInvalida(InvalidApiVersionException ex) {
+        return problema(HttpStatus.BAD_REQUEST, "Versión de API no soportada",
+                "La versión '" + ex.getVersion() + "' no es soportada. Versiones disponibles: " + VERSIONES_SOPORTADAS);
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGenerico(Exception ex) {
         log.error("Error no controlado", ex);
@@ -79,6 +97,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .toList();
         problema.setProperty("errores", errores);
         return ResponseEntity.badRequest().body(problema);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleNoResourceFoundException(NoResourceFoundException ex,
+                                                                    HttpHeaders headers,
+                                                                    HttpStatusCode status,
+                                                                    WebRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problema(HttpStatus.NOT_FOUND, "Recurso no encontrado",
+                "No existe el recurso /" + ex.getResourcePath() + " para la versión de API solicitada"));
     }
 
     private Map<String, Object> detalleCampo(FieldError error) {

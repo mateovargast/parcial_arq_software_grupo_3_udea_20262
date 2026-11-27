@@ -13,6 +13,7 @@ import co.edu.udea.arqsoftware.inventario.web.dto.InventarioCargaRequest;
 import co.edu.udea.arqsoftware.inventario.web.dto.InventarioItemRequest;
 import co.edu.udea.arqsoftware.inventario.web.dto.InventarioItemResponse;
 import co.edu.udea.arqsoftware.inventario.web.dto.PageResponse;
+import co.edu.udea.arqsoftware.inventario.web.dto.ResumenInventarioResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,11 @@ public class InventarioService {
         validarAlmacenExiste(sedeId);
         return PageResponse.from(inventarioRepository.findByAlmacenId(sedeId, pageable)
                 .map(InventarioItemResponse::from));
+    }
+
+    public ResumenInventarioResponse resumir(Long sedeId) {
+        validarAlmacenExiste(sedeId);
+        return ResumenInventarioResponse.from(sedeId, inventarioRepository.resumirPorAlmacen(sedeId));
     }
 
     @Transactional
