@@ -35,6 +35,10 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+app:
+  cache:
+    ttl: ${CACHE_TTL:10m}
+
 springdoc:
   default-produces-media-type: application/hal+json
   api-docs:
@@ -63,6 +67,16 @@ spring:
     show-sql: true
   cache:
     type: simple
+    cache-names: inventario, resumen-inventario
+
+management:
+  health:
+    redis:
+      enabled: false
+
+logging:
+  level:
+    org.springframework.cache: TRACE
 
 ---
 spring:
@@ -71,3 +85,11 @@ spring:
       on-profile: docker
   datasource:
     url: ${DB_URL:jdbc:postgresql://postgres:5432/inventario_db}
+  cache:
+    type: redis
+    redis:
+      enable-statistics: true
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}

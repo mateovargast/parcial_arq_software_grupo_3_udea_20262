@@ -1,5 +1,6 @@
 package co.edu.udea.arqsoftware.inventario.service;
 
+import co.edu.udea.arqsoftware.inventario.config.CacheConfig;
 import co.edu.udea.arqsoftware.inventario.domain.Almacen;
 import co.edu.udea.arqsoftware.inventario.domain.Inventario;
 import co.edu.udea.arqsoftware.inventario.domain.Producto;
@@ -15,6 +16,9 @@ import co.edu.udea.arqsoftware.inventario.web.dto.InventarioItemResponse;
 import co.edu.udea.arqsoftware.inventario.web.dto.PageResponse;
 import co.edu.udea.arqsoftware.inventario.web.dto.ResumenInventarioResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,17 +40,24 @@ public class InventarioService {
     private final ProductoRepository productoRepository;
     private final InventarioRepository inventarioRepository;
 
+    @Cacheable(cacheNames = CacheConfig.CACHE_INVENTARIO,
+            key = "#sedeId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
     public PageResponse<InventarioItemResponse> consultar(Long sedeId, Pageable pageable) {
         validarAlmacenExiste(sedeId);
         return PageResponse.from(inventarioRepository.findByAlmacenId(sedeId, pageable)
                 .map(InventarioItemResponse::from));
     }
 
+    @Cacheable(cacheNames = CacheConfig.CACHE_RESUMEN, key = "#sedeId")
     public ResumenInventarioResponse resumir(Long sedeId) {
         validarAlmacenExiste(sedeId);
         return ResumenInventarioResponse.from(sedeId, inventarioRepository.resumirPorAlmacen(sedeId));
     }
 
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheConfig.CACHE_INVENTARIO, allEntries = true),
+            @CacheEvict(cacheNames = CacheConfig.CACHE_RESUMEN, key = "#sedeId")
+    })
     @Transactional
     public List<InventarioItemResponse> cargar(Long sedeId, InventarioCargaRequest request) {
         Almacen almacen = almacenRepository.findById(sedeId)
