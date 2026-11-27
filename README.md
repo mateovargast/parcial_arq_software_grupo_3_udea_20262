@@ -1,108 +1,154 @@
-# Inventario por almacenes
+# API de inventario por almacenes
 
-Aplicación académica de inventario con backend Spring Boot, PostgreSQL y frontend React. 
+Parcial práctico de Arquitectura de Software, Universidad de Antioquia 2026-2, Equipo 3.
 
-## Requisitos
+Servicio REST para consultar y registrar el inventario de productos de cada sede. Incluye versionamiento por header, HATEOAS, paginación, caché con Redis, documentación OpenAPI, observabilidad con Prometheus y Grafana, despliegue con Docker Compose y un frontend en React.
 
-- Java 21 y Maven 3.9 o posterior para ejecución local.
-- Node.js 24 y npm para el frontend.
-- Docker Compose v2 para ejecutar el stack contenedorizado.
+**Repositorio:** https://github.com/mateovargast/parcial_arq_software_grupo_3_udea_20262
+
+## Tecnologías
+
+| Capa | Tecnología |
+|---|---|
+| Backend | Java 21, Spring Boot 4.1, Spring Data JPA, Spring HATEOAS |
+| Base de datos | PostgreSQL 17 |
+| Caché | Redis 7 (perfil `docker`), caché en memoria (perfil `local`) |
+| Documentación | springdoc-openapi (Swagger UI) |
+| Observabilidad | Micrometer, Prometheus, Grafana |
+| Frontend | React, TypeScript, Vite, MUI, Nginx |
+| Contenedores | Docker, Docker Compose |
+
+## Estructura
+
+```
+backend/        API Spring Boot
+frontend/       Aplicación React
+database/       ddl.sql (esquema) y data.sql (datos de ejemplo)
+deploy/         Configuración de Prometheus y Grafana
+docs/           Diagramas de arquitectura
+postman/        Colección de pruebas
+compose.yaml    Stack completo
+```
+
+## Ejecución con Docker
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+Las variables de `.env` definen las credenciales de PostgreSQL y de Grafana.
+
+| Servicio | URL |
+|---|---|
+| Frontend | http://localhost:8088 |
+| Swagger UI | http://localhost:8088/swagger-ui.html |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
+
+PostgreSQL y Redis solo son accesibles dentro de la red de Docker. La base se inicializa con `database/ddl.sql` y `database/data.sql` la primera vez que se crea el volumen `postgres_data`.
 
 ## Ejecución local
 
-1. Crear la base de datos `inventario_db` en PostgreSQL.
-2. Ejecutar una sola vez `database/ddl.sql` y, si se necesitan los datos de ejemplo, `database/data.sql`. **El DDL contiene `DROP TABLE`; no lo ejecutes sobre una base con datos que deban conservarse.**
-3. En una terminal:
+Requisitos: Java 21, Maven 3.9, Node.js 24 y PostgreSQL.
 
-   ```powershell
+1. Crear la base `inventario_db` y ejecutar `database/ddl.sql` y `database/data.sql`.
+2. Iniciar el backend en http://localhost:8080:
+
+   ```bash
    cd backend
    mvn spring-boot:run
    ```
 
-4. En otra terminal:
+3. Iniciar el frontend en http://localhost:5173:
 
-   ```powershell
+   ```bash
    cd frontend
    npm ci
-   Copy-Item .env.example .env.local
+   cp .env.example .env.local
    npm run dev
    ```
 
-5. Abrir `http://localhost:5173`. Vite reenvía `/api` a `http://localhost:8080`; CORS también permite `localhost:5173` y `127.0.0.1:5173`.
+Variables del backend: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `SERVER_PORT`, `CACHE_TTL`, `DASHBOARD_CACHE_TTL` y `CORS_ALLOWED_ORIGINS`.
 
-Configuración backend: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `SERVER_PORT`, `CORS_ALLOWED_ORIGINS`, `CACHE_TTL` y `DASHBOARD_CACHE_TTL`. El perfil `local` es el predeterminado y usa caché simple en memoria. Para cambiar el proxy de Vite, ajustar `API_PROXY_TARGET` en `frontend/.env.local`.
+## API
 
-## API del equipo: rutas en español y versiones v1/v2
+Todas las rutas bajo `/api` requieren el header `X-API-Version`. Las respuestas usan HAL (`application/hal+json`) y los errores siguen el formato Problem Details (`application/problem+json`, RFC 9457).
 
-Las rutas de esta API requieren `X-API-Version: 1` o `X-API-Version: 2`; cada operación declara las versiones que soporta. Las respuestas usan HAL y HATEOAS. En colecciones, leer los elementos desde `_embedded`, los enlaces desde `_links` y la paginación desde `page`.
+| Método | Ruta | Versión | Descripción | Respuestas |
+|---|---|---|---|---|
+| GET | `/api` | 1, 2 | Punto de entrada con enlaces a los recursos | 200 |
+| GET | `/api/almacenes` | 1, 2 | Lista paginada de almacenes | 200 |
+| POST | `/api/almacenes` | 1, 2 | Crea un almacén | 201, 400, 409 |
+| GET | `/api/almacenes/{sedeId}` | 1, 2 | Detalle de un almacén | 200, 404 |
+| GET | `/api/almacenes/{sedeId}/inventario` | 1, 2 | Inventario paginado de la sede | 200, 400, 404 |
+| POST | `/api/almacenes/{sedeId}/inventario` | 1, 2 | Registra productos con su stock inicial | 201, 400, 404, 409 |
+| GET | `/api/almacenes/{sedeId}/inventario/resumen` | 2 | Totales de unidades, valor y stock bajo | 200, 404 |
+| GET | `/api/productos/{productoId}` | 1, 2 | Detalle de un producto | 200, 404 |
 
-| Método | Ruta | Descripción |
+**Versionamiento.** En la versión 2, el inventario agrega a cada producto `valorTotal`, `estadoStock` (`NORMAL`, `BAJO`, `AGOTADO`) y `alerta`, además del enlace al resumen. Si falta el header o la versión no existe, la API responde 400.
+
+**Paginación.** Parámetros `page`, `size` (máximo 100) y `sort`, por ejemplo `?page=0&size=10&sort=producto.nombre,asc`. La respuesta incluye el bloque `page` y los enlaces `first`, `prev`, `next` y `last`.
+
+**Registro de inventario.** Ejemplo de cuerpo:
+
+```json
+{
+  "productos": [
+    {
+      "sku": "TEC-010",
+      "nombre": "Monitor 24 pulgadas",
+      "descripcion": "Monitor IPS Full HD",
+      "categoria": "Tecnología",
+      "unidadMedida": "UNIDAD",
+      "precioUnitario": 650000,
+      "cantidadInicial": 15,
+      "stockMinimo": 3
+    }
+  ]
+}
+```
+
+Si el SKU ya existe en el catálogo, se reutiliza el producto. Si ya está registrado en la sede, o se repite dentro de la misma solicitud, la carga se rechaza completa.
+
+**Rutas del frontend.** El frontend consume un conjunto de rutas en inglés con la versión 1: `/api/dashboard/summary`, `/api/warehouses`, `/api/products` y `/api/products/batch`. Están documentadas en el grupo v1 de Swagger.
+
+## Caché
+
+Las consultas de inventario y de resumen se guardan en Redis con la clave `inventario-api::<caché>::<parámetros>` y un TTL de 10 minutos (`CACHE_TTL`). Cada registro de inventario invalida las consultas de inventario en caché y el resumen de la sede afectada.
+
+## Observabilidad
+
+El backend expone métricas en `/actuator/prometheus` y la salud del servicio en `/actuator/health`. Prometheus recoge las métricas cada 15 segundos y Grafana carga el dashboard **Inventario API** al iniciar. El dashboard tiene estas secciones:
+
+- **Resumen:** estado de la API, tiempo activo, almacenes, registros de inventario, productos con stock bajo y porcentaje de aciertos de caché.
+- **Tráfico HTTP:** peticiones por endpoint y por código de estado, distribución por versión de API, tasa de errores 4xx y 5xx, y latencias p50, p95 y p99.
+- **Negocio:** productos registrados por sede, productos nuevos en el catálogo y cargas rechazadas por motivo.
+- **Caché Redis:** aciertos, fallos, escrituras y eliminaciones por caché.
+- **Base de datos y JVM:** pool de conexiones HikariCP, CPU, memoria, recolección de basura e hilos.
+
+Métricas propias de la aplicación:
+
+| Métrica | Tipo | Descripción |
 |---|---|---|
-| GET | `/api` | Descubrimiento de recursos HATEOAS. |
-| GET, POST | `/api/almacenes` | Listar y crear almacenes. |
-| GET | `/api/almacenes/{sedeId}` | Obtener un almacén por ID. |
-| GET | `/api/productos/{productoId}` | Obtener un producto por ID. |
-| GET | `/api/almacenes/{sedeId}/inventario` | Consultar inventario; la respuesta depende de la versión. |
-| GET | `/api/almacenes/{sedeId}/inventario/resumen` | Resumen del inventario, solo v2. |
-| POST | `/api/almacenes/{sedeId}/inventario` | Registrar productos con su stock inicial. |
+| `inventario_productos_registrados_total` | Contador | Productos registrados, por sede |
+| `inventario_catalogo_productos_creados_total` | Contador | Productos nuevos en el catálogo |
+| `inventario_cargas_rechazadas_total` | Contador | Cargas rechazadas, por motivo |
+| `inventario_almacenes` | Gauge | Almacenes registrados |
+| `inventario_registros` | Gauge | Registros de inventario |
+| `inventario_stock_bajo` | Gauge | Registros con stock igual o menor al mínimo |
 
-Las colecciones admiten `page`, `size` y `sort`. La colección Postman del repositorio incluye flujos de las dos versiones, errores y observabilidad: `postman/inventario-api.postman_collection.json`.
+Las métricas HTTP incluyen la etiqueta `api_version`, y los logs incluyen `traceId` y `spanId` para correlacionar peticiones.
 
-## API de compatibilidad para el frontend: rutas en inglés
+## Pruebas
 
-El frontend envía `X-API-Version: 1` y consume estas rutas:
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/api/dashboard/summary` | Conteos y resumen agregado por almacén. |
-| GET | `/api/warehouses?page=0&size=10&q=` | Almacenes paginados y búsqueda por nombre, código o ciudad. |
-| GET | `/api/warehouses/{id}` | Detalle de un almacén. |
-| GET | `/api/warehouses/{id}/inventory?page=0&size=10&q=` | Inventario paginado de una sede; búsqueda por SKU, nombre o categoría. |
-| GET | `/api/products?page=0&size=10&q=` | Catálogo paginado y búsqueda por SKU, nombre o categoría. |
-| GET | `/api/products/{id}` | Detalle de un producto. |
-| GET | `/api/products/{id}/inventory?page=0&size=10` | Existencias del producto por almacén. |
-| POST | `/api/products/batch` | Crea hasta 100 productos nuevos y su stock inicial en un almacén, en una transacción. |
-
-El lote solo registra SKU nuevos. SKU repetido dentro del lote o ya presente produce `409 Conflict`; no se incrementa ni reemplaza inventario existente. Validación produce `400`, almacén/producto inexistente `404`, creación correcta `201`. Los errores usan `application/problem+json`. No hay endpoints para modificar/eliminar almacenes, ni movimientos o historial de inventario.
-
-## OpenAPI y observabilidad
-
-Swagger UI: `/swagger-ui.html`; OpenAPI JSON: `/v3/api-docs`. Los grupos OpenAPI v1/v2 describen la API versionada del equipo y las rutas de compatibilidad aparecen solo en v1. Actuator expone health, info, metrics y Prometheus; el endpoint de métricas es `/actuator/prometheus`. Los detalles de salud no se exponen.
-
-## Docker Compose
-
-Desde la raíz, preparar variables locales y arrancar:
-
-```powershell
-Copy-Item .env.example .env
-# Edita .env y reemplaza las contraseñas de ejemplo.
-docker compose up --build
+```bash
+cd backend && mvn test
+cd frontend && npm test
 ```
 
-- Frontend/Nginx: `http://localhost:8088`
-- Swagger UI: `http://localhost:8088/swagger-ui.html`
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000` (credenciales del archivo `.env`)
-
-PostgreSQL y Redis no publican puertos en el host. PostgreSQL conserva datos en el volumen `postgres_data`; las bases se inicializan con los SQL existentes solo cuando ese volumen está vacío. Los scripts de inicialización no vuelven a ejecutarse sobre volúmenes ya inicializados. No usar `docker compose down -v` salvo que se quiera borrar explícitamente la persistencia.
-
-Redis almacena el resumen del dashboard durante 60 segundos por defecto (`DASHBOARD_CACHE_TTL`) y las cachés del inventario usan `CACHE_TTL` (10 minutos por defecto). El perfil `local` usa caché simple en memoria. Prometheus consulta `/actuator/prometheus` y Grafana incluye datasource/dashboard provisionados. No se incluye autenticación de negocio; no expongas la API o Actuator a redes no confiables sin añadir seguridad.
-
-## Comandos de desarrollo
-
-```powershell
-cd frontend
-npm ci
-npm run dev
-npm run build
-npm test
-```
-
-```powershell
-cd backend
-mvn test
-```
+La colección `postman/inventario-api.postman_collection.json` cubre los flujos de las dos versiones, los casos de error y los endpoints de observabilidad. Para usarla en Docker, cambia la variable `baseUrl` a `http://localhost:8088`. Ahí los endpoints de Actuator no están publicados; sus métricas se consultan desde Prometheus.
 
 ## Arquitectura
 
-Los diagramas de contexto, componentes y despliegue están en [`docs/arquitectura.md`](docs/arquitectura.md). El Compose y los servicios están definidos, pero deben ejecutarse y verificarse en el entorno destino antes de considerarlos operativos.
+Los diagramas de contexto, componentes y despliegue están en [docs/arquitectura.md](docs/arquitectura.md).
