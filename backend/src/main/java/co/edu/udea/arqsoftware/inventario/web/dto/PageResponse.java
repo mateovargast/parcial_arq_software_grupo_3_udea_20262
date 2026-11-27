@@ -25,6 +25,6 @@ public record PageResponse<T>(
     }
 
     public Page<T> toPage(Sort sort) {
-        return new PageImpl<>(content, PageRequest.of(page, size, sort), totalElements);
+        return new PageImpl<>(content, PageRequest.of(page, Math.max(size, 1), sort), totalElements);
     }
 }

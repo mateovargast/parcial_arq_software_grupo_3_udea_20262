@@ -32,4 +32,7 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
             where i.almacen.id = :almacenId
             """)
     ResumenInventarioView resumirPorAlmacen(@Param("almacenId") Long almacenId);
+
+    @Query("select count(i) from Inventario i where i.cantidad <= i.stockMinimo")
+    long contarStockBajo();
 }
