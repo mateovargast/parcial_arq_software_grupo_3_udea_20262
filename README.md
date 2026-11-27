@@ -1,6 +1,6 @@
 # Inventario por almacenes
 
-Aplicación académica de inventario con backend Spring Boot, PostgreSQL y frontend React. El backend conserva la API del equipo, con rutas en español y versionamiento v1/v2, y expone además las rutas de compatibilidad en inglés que consume el frontend. Ambas superficies usan el mismo esquema PostgreSQL; sus contratos y servicios permanecen separados.
+Aplicación académica de inventario con backend Spring Boot, PostgreSQL y frontend React. 
 
 ## Requisitos
 
