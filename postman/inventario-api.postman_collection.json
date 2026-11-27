@@ -1,0 +1,714 @@
+{
+  "info": {
+    "name": "API Inventario por Almacén - Equipo 3",
+    "description": "Pruebas funcionales de la API de inventario (versionamiento por header X-API-Version, HATEOAS, paginación, códigos HTTP y observabilidad). Ejecutar en orden con el Collection Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "sedeId",
+      "value": "1"
+    },
+    {
+      "key": "nuevaSedeId",
+      "value": ""
+    },
+    {
+      "key": "codigoSede",
+      "value": ""
+    },
+    {
+      "key": "skuNuevo",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Descubrimiento (HATEOAS)",
+      "item": [
+        {
+          "name": "Raíz de la API",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type HAL', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/hal+json'));",
+                  "const body = pm.response.json();",
+                  "pm.test('Enlace a almacenes', () => pm.expect(body._links.almacenes.href).to.include('/api/almacenes'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Almacenes",
+      "item": [
+        {
+          "name": "Listar almacenes (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes?page=0&size=2"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type HAL', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/hal+json'));",
+                  "const body = pm.response.json();",
+                  "pm.test('Página de tamaño 2', () => pm.expect(body.page.size).to.eql(2));",
+                  "pm.test('Enlace self', () => pm.expect(body._links.self).to.exist);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear almacén",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigoSede\": \"{{codigoSede}}\",\n  \"nombre\": \"Almacén de pruebas Postman\",\n  \"ciudad\": \"Barranquilla\",\n  \"direccion\": \"Calle 72 # 50-10\",\n  \"telefono\": \"6053851000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('codigoSede', 'QA-' + Date.now().toString().slice(-8));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Content-Type HAL', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/hal+json'));",
+                  "const body = pm.response.json();",
+                  "pm.test('Header Location', () => pm.expect(pm.response.headers.get('Location')).to.include('/api/almacenes/' + body.id));",
+                  "pm.test('Enlaces HATEOAS', () => { pm.expect(body._links.self).to.exist; pm.expect(body._links.inventario).to.exist; });",
+                  "pm.collectionVariables.set('nuevaSedeId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener almacén creado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{nuevaSedeId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Código de sede', () => pm.expect(body.codigoSede).to.eql(pm.collectionVariables.get('codigoSede')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear almacén duplicado (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigoSede\": \"{{codigoSede}}\",\n  \"nombre\": \"Duplicado\",\n  \"ciudad\": \"Barranquilla\",\n  \"direccion\": \"Calle 1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener almacén inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/999999"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Inventario v1",
+      "item": [
+        {
+          "name": "Consultar inventario de la sede (v1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{sedeId}}/inventario?page=0&size=3&sort=producto.nombre,asc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type HAL', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/hal+json'));",
+                  "const body = pm.response.json();",
+                  "pm.test('Contenido embebido', () => pm.expect(body._embedded.inventario.length).to.be.at.most(3));",
+                  "pm.test('Metadatos de paginación', () => pm.expect(body.page).to.have.keys('size', 'totalElements', 'totalPages', 'number'));",
+                  "pm.test('Enlaces de navegación', () => { pm.expect(body._links.self).to.exist; pm.expect(body._links.almacen).to.exist; });",
+                  "pm.test('Ítems con enlace al producto', () => pm.expect(body._embedded.inventario[0]._links.producto).to.exist);",
+                  "pm.test('v1 no incluye campos de v2', () => pm.expect(body._embedded.inventario[0]).to.not.have.property('estadoStock'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cargar productos con cantidad inicial",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{nuevaSedeId}}/inventario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productos\": [\n    {\n      \"sku\": \"TEC-001\",\n      \"nombre\": \"Teclado mecánico\",\n      \"categoria\": \"Tecnología\",\n      \"unidadMedida\": \"UNIDAD\",\n      \"precioUnitario\": 189900,\n      \"cantidadInicial\": 12,\n      \"stockMinimo\": 5\n    },\n    {\n      \"sku\": \"{{skuNuevo}}\",\n      \"nombre\": \"Cable HDMI 2 m\",\n      \"descripcion\": \"Cable HDMI 2.1\",\n      \"categoria\": \"Tecnología\",\n      \"unidadMedida\": \"UNIDAD\",\n      \"precioUnitario\": 25000,\n      \"cantidadInicial\": 3,\n      \"stockMinimo\": 10\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('skuNuevo', 'PM-' + Date.now().toString().slice(-8));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Content-Type HAL', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/hal+json'));",
+                  "const body = pm.response.json();",
+                  "pm.test('Header Location', () => pm.expect(pm.response.headers.get('Location')).to.include('/inventario'));",
+                  "pm.test('2 productos registrados', () => pm.expect(body._embedded.inventario.length).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar inventario de la sede nueva",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{nuevaSedeId}}/inventario"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Inventario actualizado (caché invalidada)', () => pm.expect(body.page.totalElements).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cargar el mismo lote otra vez (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{nuevaSedeId}}/inventario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productos\": [\n    {\n      \"sku\": \"TEC-001\",\n      \"nombre\": \"Teclado mecánico\",\n      \"categoria\": \"Tecnología\",\n      \"unidadMedida\": \"UNIDAD\",\n      \"precioUnitario\": 189900,\n      \"cantidadInicial\": 12,\n      \"stockMinimo\": 5\n    },\n    {\n      \"sku\": \"{{skuNuevo}}\",\n      \"nombre\": \"Cable HDMI 2 m\",\n      \"descripcion\": \"Cable HDMI 2.1\",\n      \"categoria\": \"Tecnología\",\n      \"unidadMedida\": \"UNIDAD\",\n      \"precioUnitario\": 25000,\n      \"cantidadInicial\": 3,\n      \"stockMinimo\": 10\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cargar en sede inexistente (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/999999/inventario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productos\": [\n    {\n      \"sku\": \"TEC-001\",\n      \"nombre\": \"Teclado mecánico\",\n      \"categoria\": \"Tecnología\",\n      \"unidadMedida\": \"UNIDAD\",\n      \"precioUnitario\": 189900,\n      \"cantidadInicial\": 12,\n      \"stockMinimo\": 5\n    },\n    {\n      \"sku\": \"{{skuNuevo}}\",\n      \"nombre\": \"Cable HDMI 2 m\",\n      \"descripcion\": \"Cable HDMI 2.1\",\n      \"categoria\": \"Tecnología\",\n      \"unidadMedida\": \"UNIDAD\",\n      \"precioUnitario\": 25000,\n      \"cantidadInicial\": 3,\n      \"stockMinimo\": 10\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Inventario v2",
+      "item": [
+        {
+          "name": "Consultar inventario de la sede (v2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "2"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{sedeId}}/inventario?size=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type HAL', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/hal+json'));",
+                  "const body = pm.response.json();",
+                  "pm.test('Campos de v2', () => { const i = body._embedded.inventario[0]; pm.expect(i).to.have.property('valorTotal'); pm.expect(i).to.have.property('estadoStock'); });",
+                  "pm.test('Enlace al resumen', () => pm.expect(body._links.resumen).to.exist);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resumen del inventario (v2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "2"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{sedeId}}/inventario/resumen"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Totales', () => pm.expect(body).to.include.keys('totalProductos', 'unidadesTotales', 'valorTotal', 'productosStockBajo'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resumen con v1 (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{sedeId}}/inventario/resumen"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Errores y versionamiento",
+      "item": [
+        {
+          "name": "Sin header X-API-Version (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/almacenes/{{sedeId}}/inventario"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Versión no soportada (400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "3"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{sedeId}}/inventario"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Datos inválidos (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{sedeId}}/inventario",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productos\": [\n    {\n      \"sku\": \"\",\n      \"nombre\": \"X\",\n      \"categoria\": \"X\",\n      \"unidadMedida\": \"UNIDAD\",\n      \"precioUnitario\": -1,\n      \"cantidadInicial\": -5\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));",
+                  "const body = pm.response.json();",
+                  "pm.test('Detalle de errores por campo', () => pm.expect(body.errores.length).to.eql(3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ordenamiento inválido (400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/{{sedeId}}/inventario?sort=noExiste"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sede inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "1"
+              }
+            ],
+            "url": "{{baseUrl}}/api/almacenes/999999/inventario"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Content-Type problem+json', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Observabilidad",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('UP', () => pm.expect(body.status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/actuator/info"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Métricas Prometheus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/actuator/prometheus"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Métricas de negocio', () => pm.expect(pm.response.text()).to.include('inventario_productos_registrados_total'));",
+                  "pm.test('Métricas HTTP por versión', () => pm.expect(pm.response.text()).to.include('api_version=\"1\"'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
