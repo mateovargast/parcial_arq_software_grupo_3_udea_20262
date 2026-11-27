@@ -1,5 +1,6 @@
 package co.edu.udea.arqsoftware.inventario.service;
 
+import co.edu.udea.arqsoftware.inventario.config.CacheConfig;
 import co.edu.udea.arqsoftware.inventario.domain.Almacen;
 import co.edu.udea.arqsoftware.inventario.repository.AlmacenRepository;
 import co.edu.udea.arqsoftware.inventario.service.exception.ConflictoException;
@@ -8,6 +9,7 @@ import co.edu.udea.arqsoftware.inventario.web.dto.AlmacenRequest;
 import co.edu.udea.arqsoftware.inventario.web.dto.AlmacenResponse;
 import co.edu.udea.arqsoftware.inventario.web.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class AlmacenService {
     private final AlmacenRepository almacenRepository;
 
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.CACHE_DASHBOARD, allEntries = true)
     public AlmacenResponse crear(AlmacenRequest request) {
         if (almacenRepository.existsByCodigoSede(request.codigoSede())) {
             throw new ConflictoException("Ya existe un almacén con código de sede " + request.codigoSede());

@@ -15,7 +15,7 @@ spring:
     apiversion:
       use:
         header: X-API-Version
-      required: true
+      required: false
       supported: 1, 2
   data:
     web:
@@ -38,6 +38,10 @@ server:
 app:
   cache:
     ttl: ${CACHE_TTL:10m}
+  dashboard-cache:
+    ttl: ${DASHBOARD_CACHE_TTL:60s}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
 
 springdoc:
   default-produces-media-type: application/hal+json
@@ -56,7 +60,7 @@ management:
         include: health,info,metrics,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: never
       probes:
         enabled: true
   info:
@@ -103,7 +107,7 @@ spring:
     show-sql: true
   cache:
     type: simple
-    cache-names: inventario, resumen-inventario
+    cache-names: inventario, resumen-inventario, dashboardSummary
 
 management:
   health:
@@ -125,6 +129,7 @@ spring:
     type: redis
     redis:
       enable-statistics: true
+      time-to-live: ${CACHE_TTL:10m}
   data:
     redis:
       host: ${REDIS_HOST:redis}

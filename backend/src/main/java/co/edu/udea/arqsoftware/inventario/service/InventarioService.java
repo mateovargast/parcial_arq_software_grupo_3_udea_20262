@@ -63,7 +63,8 @@ public class InventarioService {
 
     @Caching(evict = {
             @CacheEvict(cacheNames = CacheConfig.CACHE_INVENTARIO, allEntries = true),
-            @CacheEvict(cacheNames = CacheConfig.CACHE_RESUMEN, key = "#sedeId")
+            @CacheEvict(cacheNames = CacheConfig.CACHE_RESUMEN, key = "#sedeId"),
+            @CacheEvict(cacheNames = CacheConfig.CACHE_DASHBOARD, allEntries = true)
     })
     @Transactional
     public List<InventarioItemResponse> cargar(Long sedeId, InventarioCargaRequest request) {
