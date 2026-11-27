@@ -4,6 +4,7 @@ import co.edu.udea.arqsoftware.inventario.config.CacheConfig;
 import co.edu.udea.arqsoftware.inventario.domain.InventoryItem;
 import co.edu.udea.arqsoftware.inventario.domain.Product;
 import co.edu.udea.arqsoftware.inventario.domain.Warehouse;
+import co.edu.udea.arqsoftware.inventario.observability.InventarioMetrics;
 import co.edu.udea.arqsoftware.inventario.repository.InventoryRepository;
 import co.edu.udea.arqsoftware.inventario.repository.ProductRepository;
 import co.edu.udea.arqsoftware.inventario.repository.WarehouseRepository;
@@ -28,14 +29,17 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final WarehouseRepository warehouseRepository;
     private final InventoryRepository inventoryRepository;
+    private final InventarioMetrics metrics;
 
     public ProductService(
             ProductRepository productRepository,
             WarehouseRepository warehouseRepository,
-            InventoryRepository inventoryRepository) {
+            InventoryRepository inventoryRepository,
+            InventarioMetrics metrics) {
         this.productRepository = productRepository;
         this.warehouseRepository = warehouseRepository;
         this.inventoryRepository = inventoryRepository;
+        this.metrics = metrics;
     }
 
     public Page<Product> findAll(String query, Pageable pageable) {
@@ -60,10 +64,12 @@ public class ProductService {
         for (ProductBatchItemRequest item : request.productos()) {
             String normalizedSku = item.sku().trim().toUpperCase(Locale.ROOT);
             if (!skus.add(normalizedSku)) {
+                metrics.registrarCargaRechazada("sku_repetido_en_solicitud");
                 throw new ApiException(HttpStatus.CONFLICT, "El lote contiene SKU duplicados.");
             }
         }
         if (productRepository.existsByNormalizedSkuIn(skus)) {
+            metrics.registrarCargaRechazada("sku_existente_en_catalogo");
             throw new ApiException(HttpStatus.CONFLICT,
                     "Uno o más SKU ya existen. El lote no modificó productos ni existencias.");
         }
@@ -86,6 +92,7 @@ public class ProductService {
             inventory.add(new InventoryItem(warehouse, products.get(i), item.cantidadInicial(), item.stockMinimo()));
         }
         inventoryRepository.saveAllAndFlush(inventory);
+        metrics.registrarCarga(warehouse.getCode(), inventory.size(), products.size());
         return products;
     }
 }

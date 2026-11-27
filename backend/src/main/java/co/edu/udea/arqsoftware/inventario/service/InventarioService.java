@@ -24,8 +24,6 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.HashSet;
 import java.util.List;
@@ -101,21 +99,8 @@ public class InventarioService {
 
         log.info("Carga de inventario en sede {}: {} productos registrados ({} nuevos en catálogo)",
                 almacen.getCodigoSede(), creados.size(), productosNuevos);
-        alConfirmar(() -> metrics.registrarCarga(almacen.getCodigoSede(), creados.size(), productosNuevos));
+        metrics.registrarCarga(almacen.getCodigoSede(), creados.size(), productosNuevos);
         return creados;
-    }
-
-    private void alConfirmar(Runnable accion) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            accion.run();
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                accion.run();
-            }
-        });
     }
 
     private void validarAlmacenExiste(Long sedeId) {

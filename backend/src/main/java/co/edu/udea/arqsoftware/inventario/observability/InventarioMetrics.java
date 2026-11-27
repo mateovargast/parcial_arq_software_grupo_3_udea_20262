@@ -6,6 +6,8 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Component
 public class InventarioMetrics {
@@ -33,12 +35,14 @@ public class InventarioMetrics {
     }
 
     public void registrarCarga(String codigoSede, int productosRegistrados, int productosNuevos) {
-        Counter.builder("inventario.productos.registrados")
-                .description("Productos registrados en el inventario de una sede")
-                .tag("sede", codigoSede)
-                .register(registry)
-                .increment(productosRegistrados);
-        productosCatalogoCreados.increment(productosNuevos);
+        alConfirmar(() -> {
+            Counter.builder("inventario.productos.registrados")
+                    .description("Productos registrados en el inventario de una sede")
+                    .tag("sede", codigoSede)
+                    .register(registry)
+                    .increment(productosRegistrados);
+            productosCatalogoCreados.increment(productosNuevos);
+        });
     }
 
     public void registrarCargaRechazada(String motivo) {
@@ -47,5 +51,18 @@ public class InventarioMetrics {
                 .tag("motivo", motivo)
                 .register(registry)
                 .increment();
+    }
+
+    private static void alConfirmar(Runnable accion) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            accion.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                accion.run();
+            }
+        });
     }
 }
